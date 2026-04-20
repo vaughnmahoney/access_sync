@@ -6,10 +6,26 @@ from pathlib import Path
 
 from sync_jobs.env_file import load_env_file
 
-load_env_file(Path(__file__).resolve().parents[1] / ".env")
+_ACCESS_SYNC_ROOT = Path(__file__).resolve().parents[1]
+# access_sync/.env first; then cwd (e.g. OptimaFlow root) overrides — same pattern as create_access_dupe_tables.
+load_env_file(_ACCESS_SYNC_ROOT / ".env")
+load_env_file(Path.cwd() / ".env", override=True)
 
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if value is None or str(value).strip() == "":
+        raise RuntimeError(
+            f"Missing required environment variable {name!r}. "
+            f"Add it to {_ACCESS_SYNC_ROOT / '.env'} or {Path.cwd() / '.env'}, "
+            "or set it in Windows environment variables. "
+            f"See {_ACCESS_SYNC_ROOT / '.env.example'} for keys to copy."
+        ) from None
+    return value
+
+
+SUPABASE_URL = _require_env("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = _require_env("SUPABASE_SERVICE_ROLE_KEY")
 
 ACCESS_DB_PATH = os.environ.get("ACCESS_DB_PATH", r"G:\dbHyland\Hfsapp.accdb")
 ACCESS_CONN_STR = (

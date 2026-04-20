@@ -1,4 +1,8 @@
-# pip install -r requirements.txt  (from access_sync folder or project root)
-# sync_jobs/config.py loads access_sync/.env without python-dotenv (built-in parser).
+# Install (use the same Python you use to run the sync, e.g. 32-bit for Access ODBC):
+#   python -m pip install -r requirements.txt
+# or:  install_requirements.cmd
+#
+# access_sync uses a built-in .env parser; no python-dotenv.
+# If pyodbc install fails, match Python bitness to the Microsoft Access ODBC driver (often 32-bit).
 pyodbc>=5.0.0
 requests>=2.28.0
