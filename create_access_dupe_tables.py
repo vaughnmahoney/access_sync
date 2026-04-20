@@ -26,16 +26,12 @@ from pathlib import Path
 
 import pyodbc
 
-# Load .env without importing sync_jobs.config (that module requires Supabase keys).
-_SCRIPT_DIR = Path(__file__).resolve().parent
-try:
-    from dotenv import load_dotenv
+from sync_jobs.env_file import load_env_file
 
-    load_dotenv(_SCRIPT_DIR / ".env")
-    # OptimaFlow / project dir may set DATABASE=... while access_sync/.env has defaults.
-    load_dotenv(Path.cwd() / ".env", override=True)
-except ImportError:
-    pass
+# Load .env without importing sync_jobs.config (needs Supabase keys). Layer cwd over script dir.
+_SCRIPT_DIR = Path(__file__).resolve().parent
+load_env_file(_SCRIPT_DIR / ".env")
+load_env_file(Path.cwd() / ".env", override=True)
 
 _DEFAULT_DB = r"G:\dbHyland\Hfsapp.accdb"
 

@@ -1,4 +1,4 @@
 # pip install -r requirements.txt  (from access_sync folder or project root)
-python-dotenv>=1.0.0
+# sync_jobs/config.py loads access_sync/.env without python-dotenv (built-in parser).
 pyodbc>=5.0.0
 requests>=2.28.0

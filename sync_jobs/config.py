@@ -4,13 +4,9 @@ import os
 from decimal import Decimal
 from pathlib import Path
 
-try:
-    from dotenv import load_dotenv
+from sync_jobs.env_file import load_env_file
 
-    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
-except ImportError:
-    # Optional dep: install python-dotenv to load access_sync/.env; otherwise use real env vars.
-    pass
+load_env_file(Path(__file__).resolve().parents[1] / ".env")
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
