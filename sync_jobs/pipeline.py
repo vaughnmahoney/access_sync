@@ -63,7 +63,6 @@ def run_sync_once(spec: TableSyncSpec) -> None:
                 t_dupe = time.perf_counter()
                 print("Updating dupe table from Access changes (before Supabase; testing order)...")
                 upsert_dupe_rows_from_access(conn, spec, changed_rows)
-                conn.commit()
                 print(f"dupe updated from Access ({time.perf_counter() - t_dupe:.2f}s).")
 
                 t1 = time.perf_counter()
@@ -79,7 +78,6 @@ def run_sync_once(spec: TableSyncSpec) -> None:
                 t2 = time.perf_counter()
                 print("Updating dupe table from Access changes...")
                 upsert_dupe_rows_from_access(conn, spec, changed_rows)
-                conn.commit()
                 print(f"dupe updated from Access ({time.perf_counter() - t2:.2f}s).")
         else:
             print("No Access changes found.")
@@ -107,7 +105,6 @@ def run_sync_once(spec: TableSyncSpec) -> None:
             t4 = time.perf_counter()
             print("Updating dupe table from Supabase changes...")
             upsert_dupe_rows_from_supabase(conn, spec, changed_supabase_rows)
-            conn.commit()
             print(f"dupe updated from Supabase ({time.perf_counter() - t4:.2f}s).")
             if supabase_watermark:
                 set_supabase_compare_watermark(spec.state_file, supabase_watermark)
