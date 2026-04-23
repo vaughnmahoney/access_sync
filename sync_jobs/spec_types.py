@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable
 
 
@@ -27,7 +26,6 @@ class TableSyncSpec:
     """One row-type (e.g. invoices): Access real + dupe + Supabase + mappings."""
 
     job_id: str
-    state_file: Path
 
     real_table: str
     dupe_table: str
@@ -57,10 +55,6 @@ class TableSyncSpec:
     supabase_keyset_column: str = "invoice_number"
     #: Supabase JSON keys that must be non-None to upsert a row.
     supabase_upsert_nonnull: tuple[str, ...] = ("invoice_number", "customer_id")
-    #: Column used for incremental fetch watermark (PostgREST filter).
-    supabase_watermark_column: str = "updated_at"
-    #: Full PostgREST order= when incremental fetch needs tie-breakers (composite keys).
-    supabase_incremental_order: str | None = None
     #: When True, full-table Supabase fetch uses OFFSET paging (needed for composite keys).
     full_fetch_use_offset: bool = False
     #: PostgREST order= value for offset full fetch (e.g. "invoice_number.asc,service_id.asc").

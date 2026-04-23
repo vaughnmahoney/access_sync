@@ -16,7 +16,6 @@ from sync_jobs.access_io import (
 )
 from sync_jobs.diagnostics import diagnose_access_tbl_vs_dupe_changes
 from sync_jobs.spec_types import TableSyncSpec
-from sync_jobs.state import set_supabase_compare_watermark
 from sync_jobs.supabase_io import (
     fetch_changed_supabase_rows_against_dupe,
     upsert_supabase_rows,
@@ -86,7 +85,6 @@ def run_sync_once(spec: TableSyncSpec, *, clean_exit: bool = False) -> None:
             print("No Access changes found.")
 
         changed_supabase_rows: list = []
-        supabase_watermark: str | None = None
 
         if cfg.SYNC_TEST_MAX_CHANGED_ROWS > 0 and cfg.SKIP_FULL_SUPABASE_DUPE_COMPARE_WHEN_ROW_CAP:
             print(
@@ -96,27 +94,19 @@ def run_sync_once(spec: TableSyncSpec, *, clean_exit: bool = False) -> None:
         else:
             t3 = time.perf_counter()
             print("Checking Supabase table against dupe table...")
-            changed_supabase_rows, supabase_watermark = fetch_changed_supabase_rows_against_dupe(conn, spec)
+            changed_supabase_rows = fetch_changed_supabase_rows_against_dupe(conn, spec)
             print(
                 f"Changed/new Supabase rows found: {len(changed_supabase_rows)} "
                 f"({time.perf_counter() - t3:.2f}s)"
             )
-            if supabase_watermark:
-                print(f"New Supabase compare watermark candidate: {supabase_watermark}")
 
         if changed_supabase_rows:
             t4 = time.perf_counter()
             print("Updating dupe table from Supabase changes...")
             upsert_dupe_rows_from_supabase(conn, spec, changed_supabase_rows)
             print(f"dupe updated from Supabase ({time.perf_counter() - t4:.2f}s).")
-            if supabase_watermark:
-                set_supabase_compare_watermark(spec.state_file, supabase_watermark)
-                print(f"Saved Supabase compare watermark: {supabase_watermark}")
         else:
             print("No Supabase changes found.")
-            if supabase_watermark:
-                set_supabase_compare_watermark(spec.state_file, supabase_watermark)
-                print(f"Saved Supabase compare watermark: {supabase_watermark}")
 
         print(f"Sync cycle complete ({spec.job_id}, total {time.perf_counter() - cycle_started:.2f}s).")
         completed_ok = True

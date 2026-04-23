@@ -5,16 +5,8 @@ Requires UNIQUE (customer_id, service_id, nbr_item_no) on Postgres for upserts.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sync_jobs import converters as cv
 from sync_jobs.spec_types import CompareSemantics, TableSyncSpec
-
-_ACCESS_SYNC_ROOT = Path(__file__).resolve().parent.parent.parent
-
-CUSTOMER_SERVICES_INVENTORY_STATE_FILE = (
-    _ACCESS_SYNC_ROOT / "sync_state" / "customer_services_inventory_sync_state.json"
-)
 
 CUSTOMER_SERVICES_INVENTORY_COMPARE_COLUMNS = (
     "txtInvSKU",
@@ -90,7 +82,6 @@ def _validate_customer_services_inventory_spec(spec: TableSyncSpec) -> None:
 
 CUSTOMER_SERVICES_INVENTORY_SPEC = TableSyncSpec(
     job_id="customer_services_inventory",
-    state_file=CUSTOMER_SERVICES_INVENTORY_STATE_FILE,
     real_table="tblCustSvcInv",
     dupe_table="dupeCustSvcInv",
     supabase_table="customer_services_inventory",
@@ -107,8 +98,6 @@ CUSTOMER_SERVICES_INVENTORY_SPEC = TableSyncSpec(
     map_supabase_row_to_dupe_for_compare=map_supabase_row_to_dupe_for_compare,
     supabase_keyset_column="customer_id",
     supabase_upsert_nonnull=("customer_id", "service_id", "nbr_item_no"),
-    supabase_watermark_column="updated_at",
-    supabase_incremental_order="updated_at.asc,customer_id.asc,service_id.asc,nbr_item_no.asc",
     full_fetch_use_offset=True,
     supabase_offset_order="customer_id.asc,service_id.asc,nbr_item_no.asc",
     validate_before_run=_validate_customer_services_inventory_spec,

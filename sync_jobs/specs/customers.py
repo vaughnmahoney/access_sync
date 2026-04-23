@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sync_jobs import converters as cv
 from sync_jobs.spec_types import CompareSemantics, TableSyncSpec
-
-_ACCESS_SYNC_ROOT = Path(__file__).resolve().parent.parent.parent
-
-CUSTOMERS_STATE_FILE = _ACCESS_SYNC_ROOT / "sync_state" / "customers_sync_state.json"
 
 # Matches legacy rows_differ_supabase_vs_dupe compare list (not nbrPayType/ynTax — not mapped from Supabase).
 CUSTOMERS_COMPARE_COLUMNS = (
@@ -182,7 +176,6 @@ def _validate_customers_spec(spec: TableSyncSpec) -> None:
 
 CUSTOMERS_SPEC = TableSyncSpec(
     job_id="customers",
-    state_file=CUSTOMERS_STATE_FILE,
     real_table="tblCustMast",
     dupe_table="dupeCustMast",
     supabase_table="customers",

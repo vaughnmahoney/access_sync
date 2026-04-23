@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sync_jobs import converters as cv
 from sync_jobs.spec_types import CompareSemantics, TableSyncSpec
-
-_ACCESS_SYNC_ROOT = Path(__file__).resolve().parent.parent.parent
-
-INVOICES_STATE_FILE = _ACCESS_SYNC_ROOT / "sync_state" / "invoices_sync_state.json"
 
 INVOICES_COMPARE_COLUMNS = (
     "txtCustID",
@@ -149,7 +143,6 @@ def _validate_invoices_spec(spec: TableSyncSpec) -> None:
 
 INVOICES_SPEC = TableSyncSpec(
     job_id="invoices",
-    state_file=INVOICES_STATE_FILE,
     real_table="tblInvoice",
     dupe_table="dupeInvoice",
     supabase_table="invoices",

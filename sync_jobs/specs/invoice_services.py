@@ -1,20 +1,12 @@
 """Invoice line-item services: tblInvoiceSvc ↔ invoice_services ↔ dupeInvoiceSvc.
 
 Requires a UNIQUE constraint on (invoice_number, service_id) in Postgres for upserts.
-The Supabase table has no updated_at in the baseline DDL; incremental compare uses created_at
-(won't catch in-place edits that don't change created_at — add updated_at in DB if needed).
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sync_jobs import converters as cv
 from sync_jobs.spec_types import CompareSemantics, TableSyncSpec
-
-_ACCESS_SYNC_ROOT = Path(__file__).resolve().parent.parent.parent
-
-INVOICE_SERVICES_STATE_FILE = _ACCESS_SYNC_ROOT / "sync_state" / "invoice_services_sync_state.json"
 
 INVOICE_SERVICES_COMPARE_COLUMNS = (
     "txtSvcDesc",
@@ -94,7 +86,6 @@ def _validate_invoice_services_spec(spec: TableSyncSpec) -> None:
 
 INVOICE_SERVICES_SPEC = TableSyncSpec(
     job_id="invoice_services",
-    state_file=INVOICE_SERVICES_STATE_FILE,
     real_table="tblInvoiceSvc",
     dupe_table="dupeInvoiceSvc",
     supabase_table="invoice_services",
@@ -111,8 +102,6 @@ INVOICE_SERVICES_SPEC = TableSyncSpec(
     map_supabase_row_to_dupe_for_compare=map_supabase_row_to_dupe_for_compare,
     supabase_keyset_column="invoice_number",
     supabase_upsert_nonnull=("invoice_number", "service_id"),
-    supabase_watermark_column="created_at",
-    supabase_incremental_order="created_at.asc,invoice_number.asc,service_id.asc",
     full_fetch_use_offset=True,
     supabase_offset_order="invoice_number.asc,service_id.asc",
     validate_before_run=_validate_invoice_services_spec,

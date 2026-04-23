@@ -198,67 +198,21 @@ def fetch_all_supabase_invoices(
     return all_rows
 
 
-def fetch_supabase_since_updated_at(
-    spec: TableSyncSpec,
-    updated_after: str,
-    batch_size: int = cfg.SUPABASE_FETCH_PAGE_SIZE,
-    session: requests.Session | None = None,
-) -> list[dict[str, Any]]:
-    session = session or get_supabase_http_session()
-    url = f"{cfg.SUPABASE_URL}/rest/v1/{spec.supabase_table}"
-    all_rows: list[dict[str, Any]] = []
-    offset = 0
-    wm_col = spec.supabase_watermark_column
-    kcol = spec.supabase_keyset_column
-    order = spec.supabase_incremental_order or f"{wm_col}.asc,{kcol}.asc"
-
-    while True:
-        params: dict[str, str] = {
-            "select": spec.supabase_select_columns,
-            "order": order,
-            wm_col: f"gt.{updated_after}",
-            "limit": str(batch_size),
-            "offset": str(offset),
-        }
-        response = supabase_rest_request(session, "GET", url, params=params)
-        response.raise_for_status()
-        batch = response.json()
-        if not batch:
-            break
-        all_rows.extend(batch)
-        print(
-            f"Fetched incremental Supabase batch: {len(batch)} rows, "
-            f"total since watermark: {len(all_rows)} ({spec.job_id})"
-        )
-        if len(batch) < batch_size:
-            break
-        offset += batch_size
-    return all_rows
-
-
 def fetch_changed_supabase_rows_against_dupe(
     conn,
     spec: TableSyncSpec,
-) -> tuple[list[dict[str, Any]], str | None]:
+) -> list[dict[str, Any]]:
     from sync_jobs.access_io import fetch_dupe_snapshot
     from sync_jobs.compare_logic import first_diff_column_supabase_vs_dupe, rows_differ_supabase_vs_dupe
     from sync_jobs import config as cfg
-    from sync_jobs.state import get_supabase_compare_watermark
 
     print("Loading dupe snapshot from Access...")
     dupe_snapshot = fetch_dupe_snapshot(conn, spec)
     print(f"Loaded dupe snapshot rows: {len(dupe_snapshot)}")
 
-    state_path = spec.state_file
-    watermark = get_supabase_compare_watermark(state_path)
-    if watermark:
-        print(f"Loading Supabase rows updated after watermark: {watermark}")
-        supabase_rows = fetch_supabase_since_updated_at(spec, watermark)
-        print(f"Loaded incremental Supabase rows: {len(supabase_rows)}")
-    else:
-        print("No watermark found; loading full Supabase table...")
-        supabase_rows = fetch_all_supabase_invoices(spec)
-        print(f"Loaded Supabase rows: {len(supabase_rows)}")
+    print("Loading full Supabase table for compare (every row)...")
+    supabase_rows = fetch_all_supabase_invoices(spec)
+    print(f"Loaded Supabase rows: {len(supabase_rows)}")
 
     changed_rows: list[dict[str, Any]] = []
     diff_samples_logged = 0
@@ -283,12 +237,4 @@ def fetch_changed_supabase_rows_against_dupe(
                     )
                     diff_samples_logged += 1
 
-    wm_col = spec.supabase_watermark_column
-    max_wm: str | None = None
-    for row in supabase_rows:
-        w = row.get(wm_col)
-        if isinstance(w, str) and w:
-            if max_wm is None or w > max_wm:
-                max_wm = w
-
-    return changed_rows, max_wm
+    return changed_rows

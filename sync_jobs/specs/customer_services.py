@@ -5,18 +5,12 @@ Requires UNIQUE (customer_id, service_id) on Postgres for upserts.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sync_jobs import converters as cv
 from sync_jobs.spec_types import CompareSemantics, TableSyncSpec
 
 # Access/Jet source + mirror (must match your .accdb; used by all SQL built from this spec).
 ACCESS_REAL_TABLE = "tblCustSvc"
 ACCESS_DUPE_TABLE = "dupeCustSvc"
-
-_ACCESS_SYNC_ROOT = Path(__file__).resolve().parent.parent.parent
-
-CUSTOMER_SERVICES_STATE_FILE = _ACCESS_SYNC_ROOT / "sync_state" / "customer_services_sync_state.json"
 
 CUSTOMER_SERVICES_COMPARE_COLUMNS = (
     "txtSvcType",
@@ -143,7 +137,6 @@ def _customer_services_spec() -> TableSyncSpec:
     try:
         return TableSyncSpec(
             job_id="customer_services",
-            state_file=CUSTOMER_SERVICES_STATE_FILE,
             real_table=ACCESS_REAL_TABLE,
             dupe_table=ACCESS_DUPE_TABLE,
             supabase_table="customer_services",
@@ -160,8 +153,6 @@ def _customer_services_spec() -> TableSyncSpec:
             map_supabase_row_to_dupe_for_compare=map_supabase_row_to_dupe_for_compare,
             supabase_keyset_column="customer_id",
             supabase_upsert_nonnull=("customer_id", "service_id"),
-            supabase_watermark_column="updated_at",
-            supabase_incremental_order="updated_at.asc,customer_id.asc,service_id.asc",
             full_fetch_use_offset=True,
             supabase_offset_order="customer_id.asc,service_id.asc",
             validate_before_run=_validate_customer_services_spec,
