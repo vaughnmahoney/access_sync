@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import time
 from datetime import datetime
 
@@ -33,7 +35,7 @@ def _maybe_cap_changed_rows(rows: list, cap: int) -> list:
     return out
 
 
-def run_sync_once(spec: TableSyncSpec) -> None:
+def run_sync_once(spec: TableSyncSpec, *, clean_exit: bool = False) -> None:
     if spec.validate_before_run is not None:
         spec.validate_before_run(spec)
 
@@ -44,6 +46,7 @@ def run_sync_once(spec: TableSyncSpec) -> None:
     conn = get_access_connection()
     print("Access connection opened.")
 
+    completed_ok = False
     try:
         t0 = time.perf_counter()
         print("Fetching changed rows from Access...")
@@ -116,6 +119,7 @@ def run_sync_once(spec: TableSyncSpec) -> None:
                 print(f"Saved Supabase compare watermark: {supabase_watermark}")
 
         print(f"Sync cycle complete ({spec.job_id}, total {time.perf_counter() - cycle_started:.2f}s).")
+        completed_ok = True
 
     except Exception:
         conn.rollback()
@@ -124,3 +128,9 @@ def run_sync_once(spec: TableSyncSpec) -> None:
         print("Closing Access connection...")
         conn.close()
         print("Access connection closed.")
+
+    if completed_ok and clean_exit:
+        # Returning would destroy pyodbc objects and can AV (0xC0000005) before the CLI reaches os._exit.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)

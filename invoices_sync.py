@@ -13,7 +13,6 @@ Loop every N seconds (dev):
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 import time
 
@@ -33,11 +32,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.loop <= 0:
-        run_sync_once(INVOICES_SPEC)
-        # Skip Python teardown on Windows — Access ODBC/pyodbc can crash on interpreter exit (0xC0000005).
-        sys.stdout.flush()
-        sys.stderr.flush()
-        os._exit(0)
+        run_sync_once(INVOICES_SPEC, clean_exit=True)
 
     while True:
         try:
